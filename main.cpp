@@ -1,13 +1,13 @@
 #include <iostream>
-#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <unistd.h>
+#include <fstream>
 
-struct message {
+struct msgbuf {
     long mtype;
     char mtext[80];
-} msg;
+};
 
 int create__queue(key_t key_value)
 {
@@ -23,32 +23,44 @@ int create__queue(key_t key_value)
 
 int main()
 {
+    int return_code;
+    int queue_code;
+
+    struct msgbuf msg;
+
     // get the key
     key_t key = ftok("/tmp/msg.temp", 1);
 
     // create queue
-    int qc = create__queue(key);
+    queue_code = create__queue(key);
+
+    // create file
+    std::ofstream output_file("/home/box/message.txt");
+
+    return_code = msgsnd(queue_code, (void *) &msg, sizeof(msg.mtext), 0);
+    if (return_code < 0) {
+        std::cout << "msgsnd failed, rc = " << return_code << "\n";
+        return 1;
+    }
 
     if(fork()){
-        ssize_t rc = msgrcv(qc, &msg, sizeof(msg.mtext), 0, 0);
+        ssize_t rc = msgrcv(queue_code, (void *) &msg, sizeof(msg.mtext), 0, 0);
         if (rc < 0) {
-            perror( strerror(errno) );
-            printf("msgrcv failed, rc=%d\n", rc);
+            std::cout << "msgrcv failed, rc = " << return_code << "\n";
             return 1;
         }
-        printf("received msg: %s\n", msg.mtext);
-
-        // pause();
+        output_file << msg.mtext;
+        
     }
 
     // remove queue
-//    int rc = msgctl(qc, IPC_RMID, NULL);
-//    if (rc < 0) {
+//    return_code = msgctl(queue_code, IPC_RMID, NULL);
+//    if (return_code < 0) {
 //        perror( strerror(errno) );
-//        printf("msgctl (return queue) failed, rc=%d\n", rc);
+//        printf("msgctl (return queue) failed, rc=%d\n", return_code);
 //        return 1;
 //    }
-//    printf("message queue %d is gone\n", qc);
+//    printf("message queue %d is gone\n", return_code);
 
     return 0;
 }
