@@ -4,53 +4,44 @@
 #include <unistd.h>
 #include <fstream>
 
-struct msgbuf {
+struct message {
     long mtype;
     char mtext[80];
 };
 
-int create__queue(key_t key_value)
-{
-    int qid;
-
-    if((qid = msgget(key_value, IPC_CREAT | 0660 )) == -1)
-    {
-        return(-1);
-    }
-
-    return(qid);
-}
-
 int main()
 {
-    int return_code;
-    int queue_code;
-
-    struct msgbuf msg;
-
     // get the key
     key_t key = ftok("/tmp/msg.temp", 1);
 
     // create queue
-    queue_code = create__queue(key);
+    int queue_code = msgget(key, IPC_CREAT|IPC_EXCL|0666);
 
     // create file
     std::ofstream output_file("/home/box/message.txt");
 
-    return_code = msgsnd(queue_code, (void *) &msg, sizeof(msg.mtext), 0);
-    if (return_code < 0) {
-        std::cout << "msgsnd failed, rc = " << return_code << "\n";
-        return 1;
-    }
+//    if(fork()) {
+//        message msg;
+//        std::strcpy(msg.mtext, "my message is here!");
+//        msg.mtype = 1;
+//
+//        ssize_t rc = msgsnd(queue_code, &msg, sizeof(msg.mtext), 0);
+//        if (rc < 0) {
+//            std::cout << "msgsnd failed, rc = " << rc << "\n";
+//            return 1;
+//        }
+//    }
+//    sleep(1);
 
     if(fork()){
+        message msg;
         ssize_t rc = msgrcv(queue_code, (void *) &msg, sizeof(msg.mtext), 0, 0);
+
         if (rc < 0) {
-            std::cout << "msgrcv failed, rc = " << return_code << "\n";
+            std::cout << "msgrcv failed, rc = " << rc << "\n";
             return 1;
         }
-        output_file << msg.mtext;
-        
+        std::cout << msg.mtext << "\n";
     }
 
     // remove queue
