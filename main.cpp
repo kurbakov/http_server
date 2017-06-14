@@ -49,7 +49,7 @@ int main()
             std::cout << "msgrcv failed, rc = " << rc << "\n";
             return 1;
         }
-
+        output_file << msg_recv.mtext;
         std::cout << msg_recv.mtext << "\n";
     }
 
