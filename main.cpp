@@ -1,57 +1,40 @@
-#include <iostream>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <errno.h>
+#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
+#include <errno.h>
+#include <mqueue.h>
+#include <iostream>
 #include <fstream>
 
-struct message {
-    long mtype;
-    char mtext[80];
-};
+#define MSG_SIZE 4096
 
-int main()
+int main(int argc, char **argv)
 {
-    // get the key
-    int key = ftok("/tmp/msg.temp", 1);
-    std::cout << key << "\n";
+    char buffer[MSG_SIZE + 1];
 
-    // create queue
-    int queue_code = msgget(key, IPC_CREAT|IPC_EXCL|0666);
+    // initialize the queue attributes
+    struct mq_attr attr;
+    attr.mq_flags = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = MSG_SIZE;
+    attr.mq_curmsgs = 0;
 
     // create file
     std::ofstream output_file("/home/box/message.txt");
 
-//    if(fork()) {
-//        message msg_send;
-//        std::strcpy(msg_send.mtext, "my message is here!");
-//        msg_send.mtype = 1;
-//
-//        ssize_t rc = msgsnd(queue_code, &msg_send, sizeof(msg_send.mtext), 0);
-//        if (rc < 0) {
-//            perror( strerror(errno) );
-//            std::cout << "msgsnd failed, rc = " << rc << "\n";
-//            return 1;
-//        }
-//    }
-//
-    if(fork()) {
-        message msg_recv;
-        ssize_t rc = msgrcv(queue_code, &msg_recv, sizeof(msg_recv.mtext), 0, 0);
+    /* create the message queue */
+    mqd_t mq = mq_open("/test.mq", O_CREAT | O_RDWR, 0666, &attr);
 
-        if (rc < 0) {
-            perror(strerror(errno));
-            std::cout << "msgrcv failed, rc = " << rc << "\n";
-            return 1;
-        }
-        output_file << msg_recv.mtext;
-        std::cout << msg_recv.mtext << "\n";
-    }
+    if(fork()){
+        ssize_t bytes_read = mq_receive(mq, buffer, MSG_SIZE, NULL);
+
+        buffer[bytes_read] = '\0';
+        output_file << buffer;
+	}
+
+    // mq_close(mq);
 
     return 0;
 }
