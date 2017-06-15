@@ -1,27 +1,23 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
+#include <sys/shm.h>
 #include <iostream>
+#include <cstring>
+
+const int SIZE = 4 * 1024*1024; /*4 MB*/
 
 int main(int argc, char const *argv[])
 {
 	// get the key of the queue
-	key_t key = ftok("/temp/sem.temp", 1);
+	key_t key = ftok("/tmp/mem.temp",1);
 
-	// create sim
-	int sem_id = semget(key, 16, IPC_CREAT | 0666);
+	// create shm
+	int shm_id = shmget(key, SIZE , IPC_CREAT | IPC_EXCL | 0666);
 
-	union semun {
-		int val;
-		struct semid_ds *buf;
- 		ushort *array;
- 	} arg;
-
-	for(int i=0; i<16; i++)
-	{
-		arg.val = i;
-		semctl(sem_id, i, SETVAL, arg);
-	}
+	// write data
+	char data = '42';
+	void* it = shmat(key, NULL, 0);
+	memcpy((char*)it, data, 10);
 
 	return 0;
 }
