@@ -1,5 +1,5 @@
 all:
-	g++ -Wall -o main main.cpp
+	g++ -pthread main.cpp -o main
 
 clean:
 	rm -f main
