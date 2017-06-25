@@ -46,21 +46,30 @@ int http_server::set_nonblock(int fd) {
 }
 
 void http_server::handle_requests(int master_socket){
+	// create the epoll file distruct
 	int epollfd = epoll_create1(0);
 
+	// specify the Epoll
 	struct epoll_event ev;
 	ev.events = EPOLLIN | EPOLLET;
 	ev.data.fd = master_socket;
 	
+	// connect the pool to the socket
 	epoll_ctl(epollfd, EPOLL_CTL_ADD, master_socket, &ev);
 
+	// start to handle requests
 	while(1){
+		// MAX_EVENTS = 256 (const variable)
 		struct epoll_event EVENTS[MAX_EVENTS];
+
+		// check the number of requests
 		int N = epoll_wait(epollfd, EVENTS, MAX_EVENTS, -1);
 
+		// loop in requests
 		for(int i=0; i<N; i++){
+
+			// if the master socket sends the request we accept it
 			if(EVENTS[i].data.fd == master_socket){
-				// if master we accept
 				int SlaveSocket = accept(master_socket, 0 ,0);
 				set_nonblock(SlaveSocket);
 				
@@ -71,14 +80,19 @@ void http_server::handle_requests(int master_socket){
 				epoll_ctl(epollfd, EPOLL_CTL_ADD, SlaveSocket, &Event);
 			}
 			else{
-				// read
 				static char BUFFER[1024];
+
+				// read the request
 				int RecvResult = recv(EVENTS[i].data.fd, BUFFER, 1024, MSG_NOSIGNAL);
+				
+				// if we do not like what we read or can not read
 				if((RecvResult == 0) && (errno != EAGAIN)){
 					shutdown(EVENTS[i].data.fd, SHUT_RDWR);
 					close(EVENTS[i].data.fd);
 				}
+				// if read was fine and we want to reply
 				else if(RecvResult > 0){
+					std::cout << BUFFER << "\n";
 					send(EVENTS[i].data.fd, BUFFER, RecvResult, MSG_NOSIGNAL);
 				}
 			}
