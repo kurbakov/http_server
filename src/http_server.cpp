@@ -7,7 +7,9 @@ http_server::http_server(std::string ip, std::string p, std::string dir)
 	directory = dir;
 }
 
-http_server::~http_server(){}
+http_server::~http_server()
+{
+}
 
 int http_server::initiate_socket(std::string h, std::string p){
 	// start socket
@@ -23,7 +25,7 @@ int http_server::initiate_socket(std::string h, std::string p){
 	bind(master_socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
 
 	// make it non block
-	set_nonblock(my_socket);
+	set_nonblock(master_socket);
 
 	// start to listen
 	listen(master_socket, SOMAXCONN);
@@ -44,10 +46,9 @@ int http_server::set_nonblock(int fd) {
 }
 
 void http_server::handle_requests(int master_socket){
+	int epollfd = epoll_create1(0);
 
-	struct epoll_event ev, events[MAX_EVENTS];
-
-	int epoolfd = epoll_create1(0);
+	struct epoll_event ev;
 	ev.events = EPOLLIN | EPOLLET;
 	ev.data.fd = master_socket;
 	
@@ -55,32 +56,34 @@ void http_server::handle_requests(int master_socket){
 
 	while(1){
 		struct epoll_event EVENTS[MAX_EVENTS];
-		int N = epool_wait(epoolfd, EVENTS, MAX_EVENTS, -1);
+		int N = epoll_wait(epollfd, EVENTS, MAX_EVENTS, -1);
 
-		for(unsigned int i=0; i<N; i++){
+		for(int i=0; i<N; i++){
 			if(EVENTS[i].data.fd == master_socket){
 				// if master we accept
-				int SlaveSocket = accepr(master_socket, 0 ,0);
+				int SlaveSocket = accept(master_socket, 0 ,0);
 				set_nonblock(SlaveSocket);
-				struct epool_event Event;
-				ev.events = EPOLLIN;
-				ev.data.fd = SlaveSocket;
-				epoll_ctl(epoolfd, EPOLL_CTL_ADD, SlaveSocket, &Event);
+				
+				struct epoll_event Event;
+				Event.events = EPOLLIN;
+				Event.data.fd = SlaveSocket;
+				
+				epoll_ctl(epollfd, EPOLL_CTL_ADD, SlaveSocket, &Event);
 			}
 			else{
 				// read
-				static BUFFER[1024];
-				int RecvResult = recv(EVENTS[i].data.fd, BUFFER, 1024. MSG_NO_SIGNAL);
+				static char BUFFER[1024];
+				int RecvResult = recv(EVENTS[i].data.fd, BUFFER, 1024, MSG_NOSIGNAL);
 				if((RecvResult == 0) && (errno != EAGAIN)){
 					shutdown(EVENTS[i].data.fd, SHUT_RDWR);
 					close(EVENTS[i].data.fd);
 				}
 				else if(RecvResult > 0){
-					send(EVENTS[i].data.fd, BUFFER, RecvResult, MSG_NO_SIGNAL);
+					send(EVENTS[i].data.fd, BUFFER, RecvResult, MSG_NOSIGNAL);
 				}
 			}
-		}
-	}
+		} // foor loop
+	} // while loop
 
 	return;
 }

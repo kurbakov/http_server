@@ -1,4 +1,4 @@
-#include <iostream>     // abort()
+#include <stdlib.h>     // abort()
 #include <unistd.h>     // optarg
 #include "http_server.h"
 
