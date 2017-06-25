@@ -1,7 +1,7 @@
-#include <iostream>
-#include <unistd.h>
-
+#include <iostream>     // abort()
+#include <unistd.h>     // optarg
 #include "http_server.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     }
 
 	http_server h(ip, port, directory);
+    h.run();
 
 	return 0;
 }
