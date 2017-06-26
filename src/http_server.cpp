@@ -19,7 +19,7 @@ int http_server::initiate_socket(std::string h, std::string p){
 	struct sockaddr_in SockAddr;
 	SockAddr.sin_family = AF_INET;
 	SockAddr.sin_port = htons(std::stoi(p)); // port is a private varianble of the class
-	inet_pton(AF_INET, h.c_str(), &SockAddr);
+	inet_pton(AF_INET, h.c_str(), &SockAddr.sin_addr);
 
 	// bind
 	bind(master_socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
@@ -168,5 +168,4 @@ void http_server::run()
 	// create and start to listen
 	int my_socket = initiate_socket(host, port);
 	handle_requests(my_socket);
-
 }
