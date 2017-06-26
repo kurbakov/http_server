@@ -21,6 +21,9 @@ private:
 	int initiate_socket(std::string h, std::string p);
 	int set_nonblock(int fd);
 	void handle_requests(int fd);
+	void proceed_request(int fd);
+
+	std::string build_reply(std::string, std::string);
 	
 public:
 	http_server(std::string, std::string, std::string);

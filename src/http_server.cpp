@@ -45,7 +45,81 @@ int http_server::set_nonblock(int fd) {
 #endif
 }
 
-void http_server::handle_requests(int master_socket){
+std::string http_server::build_reply(std::string header, std::string data)
+{
+	std::string reply;
+
+	reply.append(header);
+	reply.append("\r\n");
+	reply.append("Content-length: ");
+	reply.append(std::to_string(data.size()));
+	reply.append("\r\n");
+	reply.append("Content-Type: text/html");
+	reply.append("\r\n\r\n");
+	reply.append(data);
+
+	return reply;
+}
+
+void http_server::proceed_request(int fd)
+{
+	// @ Maksim Vlasov comment!!!!
+	static char BUFFER[1024];
+
+	// read the request
+	int RecvResult = recv(fd, BUFFER, 1024, MSG_NOSIGNAL);
+	
+	// if we do not like what we read or can not read
+	if((RecvResult == 0) && (errno != EAGAIN)){
+		shutdown(fd, SHUT_RDWR);
+		close(fd);
+	}
+	// if read was fine and we want to reply
+	else if(RecvResult > 0){
+		// parse HTTP request: get the file name
+		std::string request = BUFFER;
+		int start = request.find("/");
+		if(start == -1)
+			start = 0;
+		int end = request.find("?");
+		if (end == -1)
+			end = request.length();
+
+		std::string path_file;
+		if(end>start)
+			path_file = request.substr(start, end-start);
+
+		// read from the given file
+		std::string data_to_send; 
+		FILE* file_in = std::fopen(path_file.c_str(), "r");
+		if(file_in){
+			std::string data;
+			data_to_send = build_reply("HTTP/1.0 404 NOT FOUND", data);
+		}
+		else{
+			std::string data;
+			std::fseek(file_in, 0, SEEK_END);
+			long fsize = std::ftell(file_in);
+			std::fseek(file_in, 0, SEEK_SET); 
+
+			char *string = (char*)std::malloc(fsize + 1);
+			std::fread(string, fsize, 1, file_in);
+
+			string[fsize] = 0;
+			data = string;
+			data_to_send = build_reply("HTTP/1.0 200 OK", data);
+		}
+		std::fclose(file_in);
+
+		// send the reply
+		send(fd, data_to_send.c_str(), data_to_send.length(), MSG_NOSIGNAL);
+
+	}
+	return;
+}
+
+void http_server::handle_requests(int master_socket)
+{
 	// create the epoll file distruct
 	int epollfd = epoll_create1(0);
 
@@ -73,28 +147,15 @@ void http_server::handle_requests(int master_socket){
 				int SlaveSocket = accept(master_socket, 0 ,0);
 				set_nonblock(SlaveSocket);
 				
-				struct epoll_event Event;
-				Event.events = EPOLLIN;
-				Event.data.fd = SlaveSocket;
+				struct epoll_event SlaveEvent;
+				SlaveEvent.events = EPOLLIN;
+				SlaveEvent.data.fd = SlaveSocket;
 				
-				epoll_ctl(epollfd, EPOLL_CTL_ADD, SlaveSocket, &Event);
+				epoll_ctl(epollfd, EPOLL_CTL_ADD, SlaveSocket, &SlaveEvent);
 			}
 			else{
-				static char BUFFER[1024];
-
-				// read the request
-				int RecvResult = recv(EVENTS[i].data.fd, BUFFER, 1024, MSG_NOSIGNAL);
-				
-				// if we do not like what we read or can not read
-				if((RecvResult == 0) && (errno != EAGAIN)){
-					shutdown(EVENTS[i].data.fd, SHUT_RDWR);
-					close(EVENTS[i].data.fd);
-				}
-				// if read was fine and we want to reply
-				else if(RecvResult > 0){
-					std::cout << BUFFER << "\n";
-					send(EVENTS[i].data.fd, BUFFER, RecvResult, MSG_NOSIGNAL);
-				}
+				int recv_fd = EVENTS[i].data.fd;
+				proceed_request(recv_fd);
 			}
 		} // foor loop
 	} // while loop

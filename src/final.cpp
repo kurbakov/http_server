@@ -28,6 +28,9 @@ int main(int argc, char *argv[])
         }
     }
 
+    // move to daemon mode
+    daemon(0,0);
+
 	http_server h(ip, port, directory);
     h.run();
 
