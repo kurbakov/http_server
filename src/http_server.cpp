@@ -13,13 +13,13 @@ http_server::~http_server()
 
 int http_server::initiate_socket(std::string h, std::string p){
 	// start socket
-	int master_socket = socket(AF_INET, SOCK_STREAM, 0);
+	int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	// create sockaddr_in struct
 	struct sockaddr_in SockAddr;
 	SockAddr.sin_family = AF_INET;
 	SockAddr.sin_port = htons(std::stoi(p)); // port is a private varianble of the class
-	inet_pton(AF_INET, h.c_str(), &SockAddr.sin_addr);
+	SockAddr.sin_addr.s_addr = inet_addr(h.c_str());
 
 	// bind
 	bind(master_socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
