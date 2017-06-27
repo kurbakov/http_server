@@ -13,7 +13,7 @@ private:
 	std::string get_file_name(std::string);
 	std::string read_file(FILE*);
 	std::string build_reply(std::string, std::string);
-	void write_log(std::string);
+	void write_log(std::string, std::string);
 
 };
 
@@ -21,12 +21,19 @@ handler::handler()
 {
 }
 
-void handler::write_log(std::string data_to_write)
+void handler::write_log(std::string data_to_write, std::string file_to_write)
 {
-	std::ofstream log_file;
-	log_file.open("logs.txt");
-	log_file << data_to_write;
-	log_file.close();
+	FILE* my_file;
+	my_file = fopen(file_to_write.c_str(), "a");
+	if(my_file)
+	{
+		fputs(data_to_write.c_str(), my_file);
+		fclose(my_file);
+	}
+	else
+	{
+		std::cout << "unable to open file "<< file_to_write << "\n";
+	}
 }
 
 std::string handler::build_reply(std::string header, std::string data)
@@ -104,9 +111,9 @@ void handler::reply(int file_descriptor, std::string dir)
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
 		}
 
-		write_log("request:\n" + std::string(BUFFER));
-		write_log("file:\n" + file_path);
-		write_log("reply:\n" + reply);
+		write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
+		write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
+		write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
 
 		send(file_descriptor, reply.c_str(), reply.length(), MSG_NOSIGNAL);
 	}
