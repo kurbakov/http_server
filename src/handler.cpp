@@ -105,7 +105,8 @@ void handler::reply(int file_descriptor, std::string dir)
 
 		if(file_in){
 			data = read_file(file_in);
-			reply = build_reply("HTTP/1.0 200 OK", data);
+			//reply = build_reply("HTTP/1.0 200 OK", data);
+			reply = data;
 		}
 		else{
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
