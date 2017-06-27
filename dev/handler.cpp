@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <ofstream>
 
 class handler{
 public:
@@ -12,11 +13,20 @@ private:
 	std::string get_file_name(std::string);
 	std::string read_file(FILE*);
 	std::string build_reply(std::string, std::string);
+	void write_log(std::string);
 
 };
 
 handler::handler()
 {
+}
+
+void handler::write_log(std::string data_to_write)
+{
+	std::ofstream log_file;
+	log_file.open("logs.txt");
+	log_file << data_to_write;
+	log_file.close();
 }
 
 std::string handler::build_reply(std::string header, std::string data)
@@ -86,9 +96,6 @@ void handler::reply(int file_descriptor, std::string dir)
 		std::string data;
 		std::string reply;
 
-		std::cout << "request: " << BUFFER << "\n";
-		std::cout << "file: " << file_path << "\n";
-
 		if(file_in){
 			data = read_file(file_in);
 			reply = build_reply("HTTP/1.0 200 OK", data);
@@ -97,8 +104,9 @@ void handler::reply(int file_descriptor, std::string dir)
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
 		}
 
-		std::cout << "reply: "<< "\n";
-		std::cout << reply << "\n";
+		write_log("request:\n" + std::string(BUFFER));
+		write_log("file:\n" + file_path);
+		write_log("reply:\n" + reply);
 
 		send(file_descriptor, reply.c_str(), reply.length(), MSG_NOSIGNAL);
 	}
