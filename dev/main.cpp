@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "http_server.cpp"
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
 	std::string host;
 	std::string port;
