@@ -28,9 +28,7 @@ std::string handler::build_reply(std::string header, std::string data)
 	reply.append("\r\n");
 	reply.append("Content-Type: text/html");
 	reply.append("\r\n\r\n");
-	
-	if(data.length() > 0)
-		reply.append(data);
+	reply.append(data);
 
 	return reply;
 }
@@ -52,17 +50,17 @@ std::string handler::read_file(FILE* file_in)
 
 std::string handler::get_file_name(std::string request)
 {
-	int start = request.find("/");
-	if(start == -1)
-		start = 0;
-	int end = request.find("?");
-	if (end == -1)
-		end = request.length();	
-	
 	std::string path_file;
-	if(end>start)
-		path_file = request.substr(start, end-start);
+	int start=request.find("/");
+	int end = start;
 
+	for(unsigned long i=start; i<request.length(); i++){
+		if(request[i] == ' ' || request[i] == '?'){
+			end = i;
+			break;
+		}
+	}
+	path_file = request.substr(start, end-start);
 	return path_file;
 }
 
@@ -86,8 +84,8 @@ void handler::reply(int file_descriptor, std::string dir)
 		std::string data;
 		std::string reply;
 
-		// std::cout << "request: " << BUFFER << "\n";
-		// std::cout << "file: " << file_path << "\n";
+		std::cout << "request: " << BUFFER << "\n";
+		std::cout << "file: " << file_path << "\n";
 
 		if(file_in){
 			data = read_file(file_in);
@@ -97,7 +95,10 @@ void handler::reply(int file_descriptor, std::string dir)
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
 		}
 
-		send(file_descriptor, reply.c_str(), reply.size(), MSG_NOSIGNAL);
+		std::cout << "reply: "<< "\n";
+		std::cout << reply << "\n";
+
+		send(file_descriptor, reply.c_str(), reply.length(), MSG_NOSIGNAL);
 	}
 	return;
 }
