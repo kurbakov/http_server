@@ -1,26 +1,27 @@
-#include <stdlib.h>     // abort()
-#include <unistd.h>     // optarg
-#include "http_server.h"
+#include <string>
+#include <stdlib.h> 
+#include <unistd.h>
+#include "http_server.cpp"
 
 
 int main(int argc, char *argv[])
 {
-	std::string ip = "127.0.0.1";
-	std::string port = "5432";
-	std::string directory = "/tmp";
+	std::string host;
+	std::string port;
+	std::string dir;
 
 	int opt;
 	while ((opt = getopt(argc, argv, "h:p:d:")) != -1){
         switch(opt)
         {
             case 'h': 
-            	if(optarg) ip = optarg;
+            	if(optarg) host = optarg;
             	break;
             case 'p':
             	if(optarg) port = optarg;
             	break;
             case 'd': 
-            	if(optarg) directory = optarg;
+            	if(optarg) dir = optarg;
             	break;
             
             default: 
@@ -28,11 +29,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    // move to daemon mode
-    daemon(0,0);
+	// daemon(0,0);
 
-	http_server h(ip, port, directory);
-    h.run();
+	http_server s(host, port, dir);
+	s.run();
 
 	return 0;
 }

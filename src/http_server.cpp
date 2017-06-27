@@ -1,37 +1,46 @@
-#include "http_server.h"
+#pragma once
 
-http_server::http_server(std::string ip, std::string p, std::string dir)
+
+#include <iostream> 		// cout
+#include <string> 			// std::string, stoi
+#include <fcntl.h> 			// flag FIOBIO in set_nonblock
+#include <arpa/inet.h> 		// inet_pton()
+#include <sys/epoll.h> 		// epoll part
+#include <unistd.h> 		// close socket
+
+#include "handler.cpp"
+
+
+#define MAX_EVENTS 32
+
+
+class http_server
 {
-	host = ip;
+public:
+	http_server(std::string, std::string, std::string);
+	~http_server();
+	void run();
+private:
+	std::string host;
+	std::string port;
+	std::string directory;
+	handler* my_handler;
+
+	int set_nonblock(int);
+	int initiate_socket(std::string, std::string);
+	void handle_requests(int);
+};
+
+http_server::http_server(std::string h, std::string p, std::string d){
+	host = h;
 	port = p;
-	directory = dir;
+	directory = d;
+	my_handler = new handler();
+}
+http_server::~http_server(){
+	delete my_handler;
 }
 
-http_server::~http_server()
-{
-}
-
-int http_server::initiate_socket(std::string h, std::string p){
-	// start socket
-	int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	// create sockaddr_in struct
-	struct sockaddr_in SockAddr;
-	SockAddr.sin_family = AF_INET;
-	SockAddr.sin_port = htons(std::stoi(p)); // port is a private varianble of the class
-	SockAddr.sin_addr.s_addr = inet_addr(h.c_str());
-
-	// bind
-	bind(master_socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
-
-	// make it non block
-	set_nonblock(master_socket);
-
-	// start to listen
-	listen(master_socket, SOMAXCONN);
-
-	return master_socket;	
-}
 
 int http_server::set_nonblock(int fd) {
         int flags;
@@ -45,105 +54,43 @@ int http_server::set_nonblock(int fd) {
 #endif
 }
 
-std::string http_server::build_reply(std::string header, std::string data)
+int http_server::initiate_socket(std::string h, std::string p)
 {
-	std::string reply;
+	int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	reply.append(header);
-	reply.append("\r\n");
-	reply.append("Content-length: ");
-	reply.append(std::to_string(data.size()));
-	reply.append("\r\n");
-	reply.append("Content-Type: text/html");
-	reply.append("\r\n\r\n");
-	reply.append(data);
+	struct sockaddr_in SockAddr;
+	SockAddr.sin_family = AF_INET;
+	SockAddr.sin_port = htons(std::stoi(p));
+	SockAddr.sin_addr.s_addr = inet_addr(h.c_str());
 
-	return reply;
-}
+	bind(master_socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
 
-void http_server::proceed_request(int fd)
-{
-	// @ Maksim Vlasov comment!!!!
-	static char BUFFER[1024];
+	set_nonblock(master_socket);
 
-	// read the request
-	int RecvResult = recv(fd, BUFFER, 1024, MSG_NOSIGNAL);
-	
-	// if we do not like what we read or can not read
-	if((RecvResult == 0) && (errno != EAGAIN)){
-		shutdown(fd, SHUT_RDWR);
-		close(fd);
-	}
-	// if read was fine and we want to reply
-	else if(RecvResult > 0){
-		// parse HTTP request: get the file name
-		std::string request = BUFFER;
-		int start = request.find("/");
-		if(start == -1)
-			start = 0;
-		int end = request.find("?");
-		if (end == -1)
-			end = request.length();
+	listen(master_socket, SOMAXCONN);
 
-		std::string path_file;
-		if(end>start)
-			path_file = request.substr(start, end-start);
-
-		// read from the given file
-		std::string data_to_send; 
-		FILE* file_in = std::fopen(path_file.c_str(), "r");
-		if(file_in){
-			std::string data;
-			data_to_send = build_reply("HTTP/1.0 404 NOT FOUND", data);
-		}
-		else{
-			std::string data;
-			std::fseek(file_in, 0, SEEK_END);
-			long fsize = std::ftell(file_in);
-			std::fseek(file_in, 0, SEEK_SET); 
-
-			char *string = (char*)std::malloc(fsize + 1);
-			std::fread(string, fsize, 1, file_in);
-
-			string[fsize] = 0;
-			data = string;
-			data_to_send = build_reply("HTTP/1.0 200 OK", data);
-		}
-		std::fclose(file_in);
-
-		// send the reply
-		send(fd, data_to_send.c_str(), data_to_send.length(), MSG_NOSIGNAL);
-
-	}
-	return;
+	return master_socket;
 }
 
 void http_server::handle_requests(int master_socket)
 {
-	// create the epoll file distruct
-	int epollfd = epoll_create1(0);
+	int Epoll = epoll_create1(0);
 
-	// specify the Epoll
-	struct epoll_event ev;
-	ev.events = EPOLLIN | EPOLLET;
-	ev.data.fd = master_socket;
+	struct epoll_event Event;
+	Event.events = EPOLLIN;
+	Event.data.fd = master_socket;
 	
-	// connect the pool to the socket
-	epoll_ctl(epollfd, EPOLL_CTL_ADD, master_socket, &ev);
+	epoll_ctl(Epoll, EPOLL_CTL_ADD, master_socket, &Event);
 
-	// start to handle requests
 	while(1){
-		// MAX_EVENTS = 256 (const variable)
-		struct epoll_event EVENTS[MAX_EVENTS];
+		struct epoll_event Events[MAX_EVENTS];
 
-		// check the number of requests
-		int N = epoll_wait(epollfd, EVENTS, MAX_EVENTS, -1);
+		int N = epoll_wait(Epoll, Events, MAX_EVENTS, -1);
 
-		// loop in requests
 		for(int i=0; i<N; i++){
 
-			// if the master socket sends the request we accept it
-			if(EVENTS[i].data.fd == master_socket){
+			if(Events[i].data.fd == master_socket)
+			{
 				int SlaveSocket = accept(master_socket, 0 ,0);
 				set_nonblock(SlaveSocket);
 				
@@ -151,11 +98,11 @@ void http_server::handle_requests(int master_socket)
 				SlaveEvent.events = EPOLLIN;
 				SlaveEvent.data.fd = SlaveSocket;
 				
-				epoll_ctl(epollfd, EPOLL_CTL_ADD, SlaveSocket, &SlaveEvent);
+				epoll_ctl(Epoll, EPOLL_CTL_ADD, SlaveSocket, &SlaveEvent);
 			}
-			else{
-				int recv_fd = EVENTS[i].data.fd;
-				proceed_request(recv_fd);
+			else
+			{
+				my_handler->reply(Events[i].data.fd, directory);
 			}
 		} // foor loop
 	} // while loop
@@ -163,9 +110,8 @@ void http_server::handle_requests(int master_socket)
 	return;
 }
 
-void http_server::run()
-{
-	// create and start to listen
-	int my_socket = initiate_socket(host, port);
-	handle_requests(my_socket);
+void http_server::run(){
+	int MasterSocket = initiate_socket(host,port);
+	handle_requests(MasterSocket);
+	return;
 }

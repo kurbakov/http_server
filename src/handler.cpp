@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <unistd.h>
 #include <stdio.h>
 #include <fstream>
@@ -14,7 +15,6 @@ private:
 	std::string read_file(FILE*);
 	std::string build_reply(std::string, std::string);
 	void write_log(std::string, std::string);
-
 };
 
 handler::handler()
