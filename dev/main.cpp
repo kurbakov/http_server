@@ -1,6 +1,7 @@
 #include <string>
+#include <stdlib.h>     // abort()
+#include <unistd.h>
 #include "http_server.cpp"
-
 
 int main(int argc, char const *argv[])
 {
