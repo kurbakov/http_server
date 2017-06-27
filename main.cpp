@@ -356,9 +356,6 @@ void master_accept_connection(struct ev_loop *loop, struct ev_io *w, int revents
 
 int main(int argc, char* argv[])
 {
-if(fork()){pause();}
-if(fork()){pause();}
-  
   
     // we want to be a daemon
     if (daemon(0, 0) == -1)
