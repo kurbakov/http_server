@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
 	std::string ip = "127.0.0.1";
 	std::string port = "5432";
-	std::string directory = "/tmp/";
+	std::string directory = "/tmp";
 
 	int opt;
 	while ((opt = getopt(argc, argv, "h:p:d:")) != -1){
