@@ -80,11 +80,15 @@ void handler::reply(int file_descriptor, std::string dir)
 	else if(RecvResult > 0)
 	{
 		std::string file_path = get_file_name(std::string(BUFFER));
-		file_path = dir+"/"+file_path;
+		file_path = dir+file_path;
 
 		FILE* file_in = std::fopen(file_path.c_str(), "r");
 		std::string data;
 		std::string reply;
+
+		// std::cout << "request: " << BUFFER << "\n";
+		// std::cout << "file: " << file_path << "\n";
+
 		if(file_in){
 			data = read_file(file_in);
 			reply = build_reply("HTTP/1.0 200 OK", data);
