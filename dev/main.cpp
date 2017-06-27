@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         }
     }
 
-	// daemon(0,0);
+	daemon(0,0);
 
 	http_server s(host, port, dir);
 	s.run();
