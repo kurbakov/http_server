@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream> 		// cout
 #include <string> 			// std::string, stoi
 #include <fcntl.h> 			// flag FIOBIO in set_nonblock
