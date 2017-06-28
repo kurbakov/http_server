@@ -28,12 +28,13 @@ void handler::write_log(std::string data_to_write, std::string file_to_write)
 	if(my_file)
 	{
 		fputs(data_to_write.c_str(), my_file);
-		fclose(my_file);
 	}
 	else
 	{
 // 		std::cout << "unable to open file "<< file_to_write << "\n";
 	}
+	fclose(my_file);
+	return;
 }
 
 std::string handler::build_reply(std::string header, std::string data)
@@ -110,9 +111,10 @@ void handler::reply(int file_descriptor, std::string dir)
 		else{
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
 		}
-		
-		write_log("\n=====================================================\n", dir+"/logs.txt");
-		write_log(std::string(BUFFER)+"\n", dir+"/logs.txt");
+		fclose(file_in);
+				
+		// write_log("\n=====================================================\n", dir+"/logs.txt");
+		// write_log(std::string(BUFFER)+"\n", dir+"/logs.txt");
 // 		write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
 // 		write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
 // 		write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
