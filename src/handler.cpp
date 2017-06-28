@@ -111,9 +111,9 @@ void handler::reply(int file_descriptor, std::string dir)
 			reply = build_reply("HTTP/1.0 404 NOT FOUND", data);
 		}
 
-		// write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
-		// write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
-		// write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
+		write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
+		write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
+		write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
 
 		std::cout << BUFFER << "\n";
 		std::cout << reply << "\n";
