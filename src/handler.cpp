@@ -32,7 +32,7 @@ void handler::write_log(std::string data_to_write, std::string file_to_write)
 	}
 	else
 	{
-		std::cout << "unable to open file "<< file_to_write << "\n";
+// 		std::cout << "unable to open file "<< file_to_write << "\n";
 	}
 }
 
@@ -117,8 +117,8 @@ void handler::reply(int file_descriptor, std::string dir)
 // 		write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
 // 		write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
 
-		std::cout << BUFFER << "\n";
-		std::cout << reply << "\n";
+// 		std::cout << BUFFER << "\n";
+// 		std::cout << reply << "\n";
 
 		send(file_descriptor, reply.c_str(), reply.length(), MSG_NOSIGNAL);
 		shutdown(file_descriptor, SHUT_RDWR);
