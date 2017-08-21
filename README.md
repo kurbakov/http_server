@@ -1,3 +1,5 @@
-# stepic
+# HTTP server
 
-temp dir for stepic solutions
+Tech stack:
+- Cmake
+- Epool
