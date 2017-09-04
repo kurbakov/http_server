@@ -13,10 +13,6 @@
 
 class http_server
 {
-public:
-	http_server(std::string, std::string, std::string);
-	~http_server();
-	void run();
 private:
 	std::string host;
 	std::string port;
@@ -26,6 +22,11 @@ private:
 	int set_nonblock(int);
 	int initiate_socket(std::string, std::string);
 	void handle_requests(int);
+	
+public:
+	http_server(std::string, std::string, std::string);
+	~http_server();
+	void run();
 };
 
 http_server::http_server(std::string h, std::string p, std::string d){
