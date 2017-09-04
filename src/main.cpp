@@ -12,8 +12,7 @@ int main(int argc, char *argv[])
 
 	int opt;
 	while ((opt = getopt(argc, argv, "h:p:d:")) != -1){
-        switch(opt)
-        {
+        switch(opt){
             case 'h': 
             	if(optarg) host = optarg;
             	break;
@@ -23,7 +22,6 @@ int main(int argc, char *argv[])
             case 'd': 
             	if(optarg) dir = optarg;
             	break;
-            
             default: 
             	abort();
         }

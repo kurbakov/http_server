@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <unistd.h>
 #include <stdio.h>
 #include <fstream>
@@ -17,21 +16,17 @@ private:
 	void write_log(std::string, std::string);
 };
 
-handler::handler()
-{
-}
+handler::handler(){}
 
 void handler::write_log(std::string data_to_write, std::string file_to_write)
 {
 	FILE* my_file;
 	my_file = fopen(file_to_write.c_str(), "a");
-	if(my_file)
-	{
+	if(my_file){
 		fputs(data_to_write.c_str(), my_file);
 		fclose(my_file);
 	}
-	else
-	{
+	else{
 		std::cout << "unable to open file "<< file_to_write << "\n";
 	}
 	return;
@@ -90,13 +85,11 @@ void handler::reply(int file_descriptor, std::string dir)
 
 	int RecvResult = recv(file_descriptor, BUFFER, 1024, MSG_NOSIGNAL);
 	
-	if((RecvResult == 0) && (errno != EAGAIN))
-	{
+	if((RecvResult == 0) && (errno != EAGAIN)){
 		shutdown(file_descriptor, SHUT_RDWR);
 		close(file_descriptor);
 	}
-	else if(RecvResult > 0)
-	{
+	else if(RecvResult > 0){
 		std::string file_path = get_file_name(std::string(BUFFER));
 		file_path = dir+file_path;
 
@@ -115,12 +108,9 @@ void handler::reply(int file_descriptor, std::string dir)
 		
 		// write_log("\n=====================================================\n", dir+"/logs.txt");
 		// write_log(std::string(BUFFER)+"\n", dir+"/logs.txt");
-// 		write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
-// 		write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
-// 		write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
-
-// 		std::cout << BUFFER << "\n";
-// 		std::cout << reply << "\n";
+		// write_log( "request:\n" + std::string(BUFFER) + "\n", dir+"/logs.txt");
+		// write_log( "file:\n" + file_path + "\n", dir+"/logs.txt");
+		// write_log( "reply:\n" + reply + "\n", dir+"/logs.txt");
 
 		send(file_descriptor, reply.c_str(), reply.length(), MSG_NOSIGNAL);
 		shutdown(file_descriptor, SHUT_RDWR);
