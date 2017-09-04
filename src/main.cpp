@@ -12,20 +12,20 @@ int main(int argc, char *argv[])
 
 	int opt;
 	while ((opt = getopt(argc, argv, "h:p:d:")) != -1){
-        switch(opt){
-            case 'h': 
-            	if(optarg) host = optarg;
-            	break;
-            case 'p':
-            	if(optarg) port = optarg;
-            	break;
-            case 'd': 
-            	if(optarg) dir = optarg;
-            	break;
-            default: 
-            	abort();
-        }
-    }
+		switch(opt){
+			case 'h': 
+				if(optarg) host = optarg;
+				break;
+			case 'p':
+				if(optarg) port = optarg;
+				break;
+			case 'd': 
+				if(optarg) dir = optarg;
+				break;
+			default: 
+				abort();
+		}
+	}
 
 	daemon(0,0);
 
