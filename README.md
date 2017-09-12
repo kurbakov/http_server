@@ -2,11 +2,11 @@
 
 Tech stack:
 - Cmake
-- Epool
+- Epoll
 
 The server should be started with the following command:
 ```bash
-./final --h <ip> -p <port> -d <directory>
+./final -h <ip> -p <port> -d <directory>
 ```
 The server consists of the following files:
 - main.cpp -> File to start the server
